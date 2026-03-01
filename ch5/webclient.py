@@ -8,7 +8,7 @@ s = socket.socket()
 target = (domain, port)
 s.connect(target)
 
-string = "GET / HTTP/1.1\r\nHost: google.com\r\nConnection: close\r\n\r\nHello!"
+string = "GET / HTTP/1.1\r\nHost: {domain}\r\nConnection: close\r\n\r\nhello\r\n"
 b = string.encode("ISO-8859-1")
 
 s.sendall(b)
