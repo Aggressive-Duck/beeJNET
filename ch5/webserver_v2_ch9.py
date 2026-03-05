@@ -59,3 +59,5 @@ while 1:
     new_socket.sendall(response)
     new_socket.close()
     print(request_text)
+
+# TODO: add second file
