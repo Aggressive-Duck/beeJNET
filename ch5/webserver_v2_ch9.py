@@ -28,7 +28,7 @@ def generate_response(request_file):
     return_headers = ""
     connection_close = "Connection: close\r\n\r\n"
     file_extention = os.path.splitext(request_file)[-1]
-    mime_type = mime_codes_dic[file_extention]
+    mime_type = mime_codes_dic.get(file_extention, "application/octet-stream")
     try:
         with open(request_file, "rb") as fp:
             body = fp.read()
@@ -57,5 +57,5 @@ while 1:
     request_file = parse_request_path(request_text)
     response = generate_response(request_file)
     new_socket.sendall(response)
-    new_socket.close
+    new_socket.close()
     print(request_text)
