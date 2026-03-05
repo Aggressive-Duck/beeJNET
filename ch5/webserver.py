@@ -10,9 +10,7 @@ s.listen()
 
 
 while 1:
-    new_conn =
-    
-     s.accept()
+    new_conn = s.accept()
     new_socket = new_conn[0]
     request_data = ""
 
