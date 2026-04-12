@@ -18,18 +18,9 @@ credentials = {
 def updateNetFlow():
     conn = sqlconnect(**credentials)
     today = date.today()
-    #today = today.replace(day=22)
     print(today)
     url = "https://netflow.yuntech.edu.tw/netflow.pl?year={0}&month={1}&day={2}&number=200".format(today.year, today.month, today.day)
-    #url = "https://netflow.yuntech.edu.tw/index.pl?year=2023&month=11&day=27&number=134"
     res = requests.get(url, verify=False)
-    #c = pycurl.Curl()
-    #c.setopt(c.URL, url)
-    #c.setopt(c.WRITEDATA, buffer)
-    #c.perform()
-    #c.close()
-    #body = buffer.getvalue().decode("big5")
-    #root = etree.parse(body)
     parser = etree.HTMLParser(encoding="big5")
     print("Parsing...")
     root = etree.fromstring(res.content, parser=parser)
@@ -39,7 +30,6 @@ def updateNetFlow():
     bed_ip = {}
     bed_ip_list = []
     with conn.cursor() as cur:
-        #cur.execute("TRUNCATE TABLE `netflow`")
         cur.execute("SELECT `ip`, `uid`, `gid` FROM `iptable` WHERE `ip_type_id` BETWEEN 1 AND 2 AND `is_unlimited` = 0 AND `lock_id` IS NULL")
         bed_ip_result = cur.fetchall()
         for ip in bed_ip_result:
@@ -51,7 +41,6 @@ def updateNetFlow():
             }
             bed_ip.update(obj)
             bed_ip_list.append(ip[0])
-        #print(bed_ip)
     lock_count = 0
     for row in result:
         IP = row[1][0].text
@@ -63,18 +52,11 @@ def updateNetFlow():
         if IP in bed_ip:
             GB = wan_upload + wan_download
             GB = GB / 1024 / 1024
-            if GB > 8+2+2:
+            if GB > 15:
                 lock_count += 1
                 print("{0}, {1}".format(IP, GB))
                 
-                days = int(GB-(5+2+2))
-                if GB>20+2:
-                    days = 15
-                if GB>50:
-                    days = None
-                unlock_date = None
-                if days is not None:
-                    unlock_date = today + timedelta(days=days)
+                unlock_date = today + timedelta(days=1)
                  
                 para_input = [ IP, bed_ip[IP]["uid"], bed_ip[IP]["gid"], unlock_date, GB]
                 with conn.cursor() as cur:
@@ -93,20 +75,11 @@ def updateNetFlow():
                         "UPDATE `iptable` SET `is_updated` = 0 WHERE `iptable`.`ip` = %s"
                     )
                     cur.execute(ip_update_sql, IP)
-        #    sql = (
-        #        "INSERT INTO `netflow` "
-        #        "(`ip`, `wan_upload`, `wan_download`, `lan_upload`, `lan_download`) "
-        #        "VALUES (%s, %s, %s,%s, %s) ON DUPLICATE KEY UPDATE ip=VALUES(ip)"
-        #    )
-        #    cur.execute(sql, para_input)
     print("Committing changes...")       
     conn.commit()
     print("Locked {0} IP".format(lock_count))
     del(root)
     del(result)
-        #print(para_input)
-        
-    #print(result)
 
 schedule.every().hour.at(":20").do(updateNetFlow)
 
@@ -114,4 +87,3 @@ updateNetFlow()
 while True:
     schedule.run_pending()
     sleep(1)
-
